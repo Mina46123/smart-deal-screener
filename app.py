@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import datetime
 
 # --------------------
 # Mocked Bayut-style Listings
@@ -54,40 +55,38 @@ data = [
 df = pd.DataFrame(data)
 
 # --------------------
-# Filter Criteria
+# Sidebar Filters
 # --------------------
-MAX_PRICE = 1000000
-MIN_SIZE = 600
-MIN_ROI = 7.0
-MIN_YEAR = 2019
-ALLOWED_DEVELOPERS = ["Sobha", "Emaar"]
+st.sidebar.title("🔧 Filter Listings")
+max_price = st.sidebar.slider("Max Price (AED)", min_value=500000, max_value=2000000, value=1000000, step=50000)
+min_size = st.sidebar.slider("Min Size (sqft)", min_value=300, max_value=1200, value=600, step=50)
+min_roi = st.sidebar.slider("Min ROI (%)", min_value=0.0, max_value=12.0, value=7.0, step=0.1)
+min_year = st.sidebar.slider("Built After Year", min_value=2000, max_value=datetime.datetime.now().year, value=2019)
+all_developers = sorted(df['developer'].unique())
+selected_developers = st.sidebar.multiselect("Allowed Developers", options=all_developers, default=["Sobha", "Emaar"])
+ready_only = st.sidebar.checkbox("Only Ready Units", value=True)
 
 # --------------------
-# Streamlit UI
+# Filter Logic
 # --------------------
-st.title("🏠 Smart Deal Screener AI")
-st.markdown("Filtering real estate listings based on your custom criteria.")
-
-# Apply filters
 filtered = df[
-    (df['price'] <= MAX_PRICE) &
-    (df['size_sqft'] >= MIN_SIZE) &
-    (df['bedrooms'] == 1) &
-    (df['roi'] >= MIN_ROI) &
-    (df['year_built'] > MIN_YEAR) &
-    (df['developer'].isin(ALLOWED_DEVELOPERS)) &
-    (df['ready'] == True)
+    (df['price'] <= max_price) &
+    (df['size_sqft'] >= min_size) &
+    (df['roi'] >= min_roi) &
+    (df['year_built'] > min_year) &
+    (df['developer'].isin(selected_developers))
 ]
 
-# Convert titles to clickable links
-filtered['Listing'] = filtered.apply(lambda row: f"[{row['title']}]({row['url']})", axis=1)
+if ready_only:
+    filtered = filtered[filtered['ready'] == True]
 
-# Display
+# --------------------
+# UI Output
+# --------------------
+st.title("🏠 Smart Deal Screener AI")
+st.markdown("Use the sidebar filters to screen real estate investment deals in Dubai.")
+
 st.subheader("🔍 Matching Properties")
-if filtered.empty:
-    st.warning("No deals match your criteria right now.")
-else:
-    st.subheader("🔍 Matching Properties")
 
 if filtered.empty:
     st.warning("No deals match your criteria right now.")
@@ -98,9 +97,7 @@ else:
         - **Price:** AED {row['price']:,}
         - **Size:** {row['size_sqft']} sqft
         - **ROI:** {row['roi']}%
-        - **Year Built:** {row['year_built']}
+        - **Year Built:** {row['year_built']} ({datetime.datetime.now().year - row['year_built']} years old)
         - **Developer:** {row['developer']}
         ---
         """)
-
-
