@@ -87,4 +87,14 @@ st.subheader("🔍 Matching Properties")
 if filtered.empty:
     st.warning("No deals match your criteria right now.")
 else:
-    st.dataframe(filtered[['Listing', 'price', 'size_sqft', 'roi', 'year_built', 'developer']].reset_index(drop=True))
+    for index, row in filtered.iterrows():
+    st.markdown(f"""
+    ### 🔗 [{row['title']}]({row['url']})
+    - **Price:** AED {row['price']:,}
+    - **Size:** {row['size_sqft']} sqft
+    - **ROI:** {row['roi']}%
+    - **Year Built:** {row['year_built']}
+    - **Developer:** {row['developer']}
+    ---
+    """)
+
